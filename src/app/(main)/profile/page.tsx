@@ -43,7 +43,7 @@ export default async function ProfilePage() {
 
   // 1. Carregar detalhes do TMDB para as avaliações
   const reviewsWithDetails = await Promise.all(
-    user.reviews.map(async (review) => {
+    user.reviews.map(async (review: any) => {
       try {
         const movie = await getMovieDetails(review.tmdbId);
         return {
@@ -67,7 +67,7 @@ export default async function ProfilePage() {
 
   // 2. Carregar detalhes do TMDB para os assistidos
   const watchedWithDetails = await Promise.all(
-    user.watched.map(async (wat) => {
+    user.watched.map(async (wat: any) => {
       try {
         const movie = await getMovieDetails(wat.tmdbId);
         return {
@@ -93,7 +93,7 @@ export default async function ProfilePage() {
 
   // 3. Carregar detalhes do TMDB para a watchlist
   const watchlistWithDetails = await Promise.all(
-    user.watchlist.map(async (watch) => {
+    user.watchlist.map(async (watch: any) => {
       try {
         const movie = await getMovieDetails(watch.tmdbId);
         return {
@@ -119,7 +119,7 @@ export default async function ProfilePage() {
 
   // 4. Carregar detalhes do TMDB para os 5 favoritos destacados
   const featuredWithDetails = await Promise.all(
-    user.featuredFavorites.map(async (fav) => {
+    user.featuredFavorites.map(async (fav: any) => {
       try {
         const movie = await getMovieDetails(fav.tmdbId);
         return {
