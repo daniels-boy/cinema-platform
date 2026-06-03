@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth.js Required Models ─────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Para login com credenciais (hash bcrypt)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts           Account[]
+  sessions           Session[]
+  reviews            Review[]
+  watched            Watched[]
+  watchlist          Watchlist[]
+  featuredFavorites  FeaturedFavorite[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Domínio da Aplicação ─────────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  tmdbId    Int      // ID do filme na API do TMDB
+  rating    Int      // 1 a 5 estrelas
+  content   String   @db.Text
+  tags      String[] @default([]) // Tags de Reação Rápida ("Hot Takes")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tmdbId]) // Um usuário só pode ter uma review por filme
+  @@map("reviews")
+}
+
+model Watched {
+  id        String   @id @default(cuid())
+  tmdbId    Int
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tmdbId])
+  @@map("watched")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  tmdbId    Int
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tmdbId])
+  @@map("watchlist")
+}
+
+model FeaturedFavorite {
+  id        String   @id @default(cuid())
+  tmdbId    Int
+  position  Int      // 1 a 5
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, position]) // Apenas um filme por posição para cada usuário
+  @@unique([userId, tmdbId])   // Um filme não pode ser repetido nos favoritos destacados do mesmo usuário
+  @@map("featured_favorites")
+}
