@@ -59,8 +59,8 @@ export default async function HomePage() {
           select: { tmdbId: true },
         }),
       ]);
-      watchedMovieIds = watched.map((w) => w.tmdbId);
-      watchlistMovieIds = watchlist.map((w) => w.tmdbId);
+      watchedMovieIds = watched.map((w: { tmdbId: number }) => w.tmdbId);
+      watchlistMovieIds = watchlist.map((w: { tmdbId: number }) => w.tmdbId);
     } catch (err) {
       console.error("Erro ao buscar filmes do usuário:", err);
     }

@@ -250,8 +250,8 @@ export async function getUserCollectionsAction() {
       }),
     ]);
     return {
-      watched: watched.map((w) => w.tmdbId),
-      watchlist: watchlist.map((w) => w.tmdbId),
+      watched: watched.map((w: { tmdbId: number }) => w.tmdbId),
+      watchlist: watchlist.map((w: { tmdbId: number }) => w.tmdbId),
     };
   } catch (err) {
     console.error("Erro ao carregar coleções do usuário:", err);
