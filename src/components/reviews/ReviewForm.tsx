@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { submitReview } from "@/actions/reviews";
 import { HOT_TAKES } from "@/types/reviews";
+import BadgeUnlockToast from "@/components/ui/BadgeUnlockToast";
+import type { BadgeResult } from "@/lib/badges";
 
 interface ReviewFormProps {
   tmdbId: number;
@@ -27,6 +29,7 @@ export default function ReviewForm({ tmdbId, initialReview }: ReviewFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [newBadges, setNewBadges] = useState<BadgeResult[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,17 +53,21 @@ export default function ReviewForm({ tmdbId, initialReview }: ReviewFormProps) {
     setSuccess(false);
 
     try {
-      const res = await submitReview({ 
-        tmdbId, 
-        rating, 
-        content: content.trim(), 
-        tags: selectedTags 
+      const res = await submitReview({
+        tmdbId,
+        rating,
+        content: content.trim(),
+        tags: selectedTags,
       });
       if (res.error) {
         setError(res.error);
       } else {
         setSuccess(true);
-        // Se for uma nova avaliação, podemos limpar o campo (ou manter para edições)
+        // Mostrar toast de badge se houver novas conquistas
+        if (res.newBadges && res.newBadges.length > 0) {
+          setNewBadges(res.newBadges);
+        }
+        // Se for uma nova avaliação, limpar campos
         if (!initialReview) {
           setContent("");
           setRating(0);
@@ -111,190 +118,200 @@ export default function ReviewForm({ tmdbId, initialReview }: ReviewFormProps) {
   }
 
   return (
-    <div
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius-lg)",
-        padding: "24px 28px",
-        marginTop: 24,
-      }}
-    >
-      <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "#fff", marginBottom: 16 }}>
-        {initialReview ? "Editar sua avaliação" : "Escrever uma avaliação"}
-      </h3>
+    <>
+      <div
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-lg)",
+          padding: "24px 28px",
+          marginTop: 24,
+        }}
+      >
+        <h3 style={{ fontSize: "1.125rem", fontWeight: 700, color: "#fff", marginBottom: 16 }}>
+          {initialReview ? "Editar sua avaliação" : "Escrever uma avaliação"}
+        </h3>
 
-      {error && (
-        <div
-          style={{
-            background: "rgba(224, 82, 82, 0.1)",
-            border: "1px solid rgba(224, 82, 82, 0.25)",
-            color: "var(--red)",
-            borderRadius: 8,
-            padding: "10px 12px",
-            fontSize: "0.8125rem",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 16,
-          }}
-        >
-          <AlertCircle size={14} style={{ flexShrink: 0 }} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div
-          style={{
-            background: "rgba(82, 192, 122, 0.1)",
-            border: "1px solid rgba(82, 192, 122, 0.25)",
-            color: "var(--green)",
-            borderRadius: 8,
-            padding: "10px 12px",
-            fontSize: "0.8125rem",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 16,
-          }}
-        >
-          <span>Sua avaliação foi salva com sucesso!</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Star Rating Select */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-            Sua nota:
-          </span>
-          <div style={{ display: "flex", gap: 4 }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(0)}
-                onClick={() => setRating(star)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  color: (hoverRating || rating) >= star ? "var(--accent)" : "var(--text-muted)",
-                  transition: "transform 0.15s, color 0.15s",
-                  transform: (hoverRating || rating) >= star ? "scale(1.15)" : "scale(1)",
-                }}
-              >
-                <Star
-                  size={24}
-                  fill={(hoverRating || rating) >= star ? "currentColor" : "none"}
-                />
-              </button>
-            ))}
+        {error && (
+          <div
+            style={{
+              background: "rgba(224, 82, 82, 0.1)",
+              border: "1px solid rgba(224, 82, 82, 0.25)",
+              color: "var(--red)",
+              borderRadius: 8,
+              padding: "10px 12px",
+              fontSize: "0.8125rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            <AlertCircle size={14} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
           </div>
-        </div>
+        )}
 
-        {/* Hot Take Tags Select */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>
-            Tags de Reação Rápida ("Hot Takes"):
-          </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {HOT_TAKES.map((tag) => {
-              const isSelected = selectedTags.includes(tag.id);
-              return (
+        {success && (
+          <div
+            style={{
+              background: "rgba(82, 192, 122, 0.1)",
+              border: "1px solid rgba(82, 192, 122, 0.25)",
+              color: "var(--green)",
+              borderRadius: 8,
+              padding: "10px 12px",
+              fontSize: "0.8125rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            <span>Sua avaliação foi salva com sucesso!</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Star Rating Select */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)", fontWeight: 500 }}>
+              Sua nota:
+            </span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[1, 2, 3, 4, 5].map((star) => (
                 <button
-                  key={tag.id}
+                  key={star}
                   type="button"
-                  onClick={() => {
-                    setSelectedTags((prev) =>
-                      prev.includes(tag.id)
-                        ? prev.filter((id) => id !== tag.id)
-                        : [...prev, tag.id]
-                    );
-                  }}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(star)}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "6px 12px",
-                    borderRadius: 20,
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
+                    background: "none",
+                    border: "none",
+                    padding: 0,
                     cursor: "pointer",
-                    transition: "all 0.2s",
-                    background: isSelected ? tag.bgColor : "rgba(255,255,255,0.03)",
-                    border: "1px solid " + (isSelected ? tag.color : "rgba(255,255,255,0.1)"),
-                    color: isSelected ? "#fff" : "var(--text-secondary)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = tag.color;
-                      e.currentTarget.style.color = "#fff";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                      e.currentTarget.style.color = "var(--text-secondary)";
-                    }
+                    color: (hoverRating || rating) >= star ? "var(--accent)" : "var(--text-muted)",
+                    transition: "transform 0.15s, color 0.15s",
+                    transform: (hoverRating || rating) >= star ? "scale(1.15)" : "scale(1)",
                   }}
                 >
-                  <span>{tag.emoji}</span>
-                  <span>{tag.label}</span>
+                  <Star
+                    size={24}
+                    fill={(hoverRating || rating) >= star ? "currentColor" : "none"}
+                  />
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Comment textarea */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-            Sua opinião
-          </label>
-          <textarea
-            required
-            rows={4}
-            placeholder="O que você achou deste filme? História, atuação, efeitos, trilha sonora..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="input"
+          {/* Hot Take Tags Select */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+              Tags de Reação Rápida (&quot;Hot Takes&quot;):
+            </span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {HOT_TAKES.map((tag) => {
+                const isSelected = selectedTags.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTags((prev) =>
+                        prev.includes(tag.id)
+                          ? prev.filter((id) => id !== tag.id)
+                          : [...prev, tag.id]
+                      );
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 12px",
+                      borderRadius: 20,
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      background: isSelected ? tag.bgColor : "rgba(255,255,255,0.03)",
+                      border: "1px solid " + (isSelected ? tag.color : "rgba(255,255,255,0.1)"),
+                      color: isSelected ? "#fff" : "var(--text-secondary)",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = tag.color;
+                        e.currentTarget.style.color = "#fff";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }
+                    }}
+                  >
+                    <span>{tag.emoji}</span>
+                    <span>{tag.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Comment textarea */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+              Sua opinião
+            </label>
+            <textarea
+              required
+              rows={4}
+              placeholder="O que você achou deste filme? História, atuação, efeitos, trilha sonora..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="input"
+              style={{
+                resize: "vertical",
+                minHeight: 80,
+                fontSize: "0.875rem",
+                background: "var(--surface-2)",
+              }}
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
             style={{
-              resize: "vertical",
-              minHeight: 80,
-              fontSize: "0.875rem",
-              background: "var(--surface-2)",
+              alignSelf: "flex-end",
+              padding: "10px 24px",
+              minWidth: 140,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 38,
             }}
-          />
-        </div>
+          >
+            {loading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : initialReview ? (
+              "Salvar Alterações"
+            ) : (
+              "Enviar Avaliação"
+            )}
+          </button>
+        </form>
+      </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn btn-primary"
-          style={{
-            alignSelf: "flex-end",
-            padding: "10px 24px",
-            minWidth: 140,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: 38,
-          }}
-        >
-          {loading ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : initialReview ? (
-            "Salvar Alterações"
-          ) : (
-            "Enviar Avaliação"
-          )}
-        </button>
-      </form>
-    </div>
+      {/* Toast de conquista desbloqueada */}
+      {newBadges.length > 0 && (
+        <BadgeUnlockToast
+          badges={newBadges}
+          onDismiss={() => setNewBadges([])}
+        />
+      )}
+    </>
   );
 }

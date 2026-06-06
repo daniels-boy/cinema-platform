@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, MessageSquare, Eye, Bookmark } from "lucide-react";
+import { Star, MessageSquare, Eye, Bookmark, Trophy } from "lucide-react";
 import { getTMDBImageUrl } from "@/lib/tmdb";
+import BadgesPanel from "./BadgesPanel";
+import type { BadgeResult } from "@/lib/badges";
 
 interface ReviewItem {
   id: string;
@@ -31,17 +33,21 @@ interface ProfileTabsProps {
   reviews: ReviewItem[];
   watched: MovieItem[];
   watchlist: MovieItem[];
+  badgeResults: BadgeResult[];
 }
 
-type TabType = "reviews" | "watched" | "watchlist";
+type TabType = "reviews" | "watched" | "watchlist" | "badges";
 
-export default function ProfileTabs({ reviews, watched, watchlist }: ProfileTabsProps) {
+export default function ProfileTabs({ reviews, watched, watchlist, badgeResults }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("reviews");
+
+  const unlockedBadges = badgeResults.filter((b) => b.unlocked).length;
 
   const tabItems = [
     { id: "reviews" as const, label: "Avaliações", count: reviews.length, icon: MessageSquare },
     { id: "watched" as const, label: "Assistidos", count: watched.length, icon: Eye },
     { id: "watchlist" as const, label: "Watchlist", count: watchlist.length, icon: Bookmark },
+    { id: "badges" as const, label: "Conquistas", count: unlockedBadges, icon: Trophy },
   ];
 
   return (
@@ -261,6 +267,11 @@ export default function ProfileTabs({ reviews, watched, watchlist }: ProfileTabs
               </div>
             )}
           </div>
+        )}
+
+        {/* TAB DE CONQUISTAS */}
+        {activeTab === "badges" && (
+          <BadgesPanel badgeResults={badgeResults} />
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getMovieDetails } from "@/lib/tmdb";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
+import { computeUserBadges, type MovieMeta } from "@/lib/badges";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -152,6 +153,33 @@ export default async function ProfilePage() {
     year: "numeric",
   });
 
+  // 5. Computar badges com base nos filmes avaliados
+  const reviewedTmdbIds = user.reviews.map((r: { tmdbId: number }) => r.tmdbId);
+  const movieMetas: MovieMeta[] = [];
+
+  await Promise.allSettled(
+    reviewedTmdbIds.map(async (tmdbId: number) => {
+      try {
+        const movie = await getMovieDetails(tmdbId);
+        const director = movie.credits?.crew?.find(
+          (c: { job: string; id: number }) => c.job === "Director"
+        );
+        movieMetas.push({
+          tmdbId: movie.id,
+          genreIds: (movie.genres || []).map((g: { id: number }) => g.id),
+          directorId: director?.id,
+          releaseYear: movie.release_date
+            ? new Date(movie.release_date).getFullYear()
+            : undefined,
+        });
+      } catch {
+        // ignorar filmes que falham
+      }
+    })
+  );
+
+  const badgeResults = computeUserBadges(movieMetas);
+
   return (
     <div style={{ position: "relative", minHeight: "100vh", paddingBottom: 80 }}>
       {/* ─── FADE HERO HEADER BANNER ───────────────────────────────────── */}
@@ -211,12 +239,13 @@ export default async function ProfilePage() {
           featuredFavorites={featuredWithDetails}
         />
 
-        {/* 2. Tabs das Coleções (Avaliações / Assistidos / Watchlist) */}
+        {/* 2. Tabs das Coleções (Avaliações / Assistidos / Watchlist / Conquistas) */}
         <div style={{ marginTop: 24 }}>
           <ProfileTabs
             reviews={reviewsWithDetails}
             watched={watchedWithDetails}
             watchlist={watchlistWithDetails}
+            badgeResults={badgeResults}
           />
         </div>
       </div>
