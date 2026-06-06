@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { TMDBMovie } from "@/types/tmdb";
+import HomeSocialFeeds from "@/components/social/HomeSocialFeeds";
 
 export const metadata: Metadata = {
   title: "CineVerse — Descubra, Avalie e Compartilhe Cinema",
@@ -129,6 +130,107 @@ export default async function HomePage() {
     console.error("Erro ao buscar coleções curadas:", err);
   }
 
+  // ─── BUSCAR DADOS SOCIAIS (PARÇAS E REVIEWS) ─────────────────────────────────
+  let friendsWatchedWithDetails: any[] = [];
+  let socialReviewsWithDetails: any[] = [];
+  let hasFriends = false;
+  let followingIds: string[] = [];
+
+  if (session?.user?.id) {
+    try {
+      const follows = await prisma.follow.findMany({
+        where: { followerId: session.user.id },
+        select: { followingId: true },
+      });
+      followingIds = follows.map((f: { followingId: string }) => f.followingId);
+      hasFriends = followingIds.length > 0;
+
+      if (hasFriends) {
+        // Filmes assistidos pelos amigos
+        const friendsWatched = await prisma.watched.findMany({
+          where: { userId: { in: followingIds } },
+          include: {
+            user: {
+              select: { id: true, name: true, image: true, email: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        });
+
+        friendsWatchedWithDetails = await Promise.all(
+          friendsWatched.map(async (wat: any) => {
+            try {
+              const movie = await getMovieDetails(wat.tmdbId);
+              return {
+                ...wat,
+                movieTitle: movie.title,
+                moviePoster: movie.poster_path,
+                movieReleaseYear: movie.release_date
+                  ? new Date(movie.release_date).getFullYear()
+                  : "",
+                voteAverage: movie.vote_average,
+              };
+            } catch {
+              return {
+                ...wat,
+                movieTitle: `Filme #${wat.tmdbId}`,
+                moviePoster: null,
+                movieReleaseYear: "",
+                voteAverage: 0,
+              };
+            }
+          })
+        );
+
+      }
+    } catch (err) {
+      console.error("Erro ao buscar dados sociais da homepage:", err);
+    }
+  }
+
+  // Fallback se não há atividade de amigos ou não está logado
+  if (friendsWatchedWithDetails.length === 0) {
+    try {
+      const generalWatched = await prisma.watched.findMany({
+        include: {
+          user: {
+            select: { id: true, name: true, image: true, email: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
+
+      friendsWatchedWithDetails = await Promise.all(
+        generalWatched.map(async (wat: any) => {
+          try {
+            const movie = await getMovieDetails(wat.tmdbId);
+            return {
+              ...wat,
+              movieTitle: movie.title,
+              moviePoster: movie.poster_path,
+              movieReleaseYear: movie.release_date
+                ? new Date(movie.release_date).getFullYear()
+                : "",
+              voteAverage: movie.vote_average,
+            };
+          } catch {
+            return {
+              ...wat,
+              movieTitle: `Filme #${wat.tmdbId}`,
+              moviePoster: null,
+              movieReleaseYear: "",
+              voteAverage: 0,
+            };
+          }
+        })
+      );
+    } catch (err) {
+      console.error("Erro ao buscar assistidos gerais:", err);
+    }
+  }
+
   return (
     <>
       {/* ─── HERO CARROSSEL OU DESTAQUE DO ADMIN ───────────────────────────────── */}
@@ -156,6 +258,13 @@ export default async function HomePage() {
             acclaimedMovies={acclaimedMovies}
             watchedMovieIds={watchedMovieIds}
             watchlistMovieIds={watchlistMovieIds}
+          />
+
+          {/* Na Tela dos Parças (Filmes assistidos pelos amigos) */}
+          <HomeSocialFeeds
+            friendsWatched={friendsWatchedWithDetails}
+            hasFriends={hasFriends}
+            currentUserId={session?.user?.id}
           />
 
           {/* Coleções Curadas do Admin */}

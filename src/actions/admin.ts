@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getMovieDetails } from "@/lib/tmdb";
+import { getMovieDetails, searchMovies } from "@/lib/tmdb";
 
 // ─── Guard: só admins podem executar estas actions ────────────────────────────
 async function requireAdmin() {
@@ -170,6 +170,15 @@ export async function deleteCollection(id: string) {
     revalidatePath("/");
     revalidatePath("/admin/curation");
     return { success: true };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+export async function searchMoviesAction(query: string) {
+  try {
+    const data = await searchMovies(query);
+    return { success: true, results: data.results || [] };
   } catch (e: any) {
     return { error: e.message };
   }

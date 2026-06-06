@@ -30,6 +30,12 @@ model User {
   watched            Watched[]
   watchlist          Watchlist[]
   featuredFavorites  FeaturedFavorite[]
+  followers          Follow[]           @relation("UserFollowing")
+  following          Follow[]           @relation("UserFollowers")
+  reviewLikes        ReviewLike[]
+  reviewComments     ReviewComment[]
+  essays             Essay[]
+  essayLikes         EssayLike[]
 
   @@map("users")
 }
@@ -92,6 +98,8 @@ model Review {
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes  ReviewLike[]
+  comments ReviewComment[]
 
   @@unique([userId, tmdbId]) // Um usuário só pode ter uma review por filme
   @@map("reviews")
@@ -159,4 +167,76 @@ model CuratedCollection {
   updatedAt   DateTime @updatedAt
 
   @@map("curated_collections")
+}
+
+// ─── Social Network ───────────────────────────────────────────────────────────
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follows")
+}
+
+model ReviewLike {
+  id        String   @id @default(cuid())
+  userId    String
+  reviewId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+  @@map("review_likes")
+}
+
+model ReviewComment {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_comments")
+}
+
+model Essay {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  tmdbId      Int
+  movieTitle  String
+  moviePoster String?
+  isSpoiler   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes  EssayLike[] @relation("EssayLikes")
+
+  @@map("essays")
+}
+
+model EssayLike {
+  id        String   @id @default(cuid())
+  userId    String
+  essayId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  essay Essay @relation("EssayLikes", fields: [essayId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, essayId])
+  @@map("essay_likes")
 }

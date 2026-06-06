@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { searchMovies, discoverMovies } from "@/lib/tmdb";
+import { searchMovies, discoverMovies, getMovieDetails } from "@/lib/tmdb";
 
 export async function toggleWatched(tmdbId: number) {
   try {
@@ -192,9 +192,11 @@ export async function searchMoviesAction(query: string) {
 export async function getGamifiedRecommendationsAction(params: {
   genreId?: number;
   era?: "recent" | "classic" | "any";
+  priority?: "popular" | "top_rated";
+  isFamily?: boolean;
 }) {
   try {
-    const { genreId, era } = params;
+    const { genreId, era, priority = "popular", isFamily = false } = params;
     
     // Determinar filtros de ano com base na era selecionada
     let year: number | undefined = undefined;
@@ -208,14 +210,16 @@ export async function getGamifiedRecommendationsAction(params: {
 
     // Seleciona uma página aleatória entre 1 e 3 para variar os resultados populares
     const randomPage = Math.floor(Math.random() * 3) + 1;
-    const sortBy = "popularity.desc";
+    const sortBy = priority === "top_rated" ? "vote_average.desc" : "popularity.desc";
+    const minRating = priority === "top_rated" ? 7.2 : 6.0;
 
     const data = await discoverMovies({
       genreId,
       year,
       page: randomPage,
       sortBy,
-      minRating: 6.0, // Apenas filmes com avaliação razoável
+      minRating,
+      ...(isFamily ? { certificationCountry: "BR", certificationLte: "12" } : {}),
     });
 
     // Filtrar filmes que têm pôster, sinopse e imagem de fundo
@@ -256,5 +260,15 @@ export async function getUserCollectionsAction() {
   } catch (err) {
     console.error("Erro ao carregar coleções do usuário:", err);
     return { error: "Erro ao carregar dados do usuário." };
+  }
+}
+
+export async function getMovieDetailsAction(tmdbId: number) {
+  try {
+    const movie = await getMovieDetails(tmdbId);
+    return { success: true, movie };
+  } catch (err) {
+    console.error("Erro ao buscar detalhes do filme no server action:", err);
+    return { error: "Erro ao obter detalhes do filme." };
   }
 }

@@ -147,6 +147,22 @@ const ERA_OPTIONS: Option[] = [
   }
 ];
 
+// 4. Passo de Prioridade / Filtro de Qualidade
+const PRIORITY_OPTIONS: Option[] = [
+  { 
+    id: "popular", 
+    label: "Mais Populares (Hype)", 
+    description: "Filmes que estão na boca da galera e fazem muito sucesso.", 
+    emoji: "🔥"
+  },
+  { 
+    id: "top_rated", 
+    label: "Mais Bem Avaliados (Top Notas)", 
+    description: "Aclamados pela crítica e pelo público, com notas lá em cima.", 
+    emoji: "🏆"
+  }
+];
+
 const ORACLE_MESSAGES = [
   "🔮 Consultando o oráculo do CineVerse...",
   "🍿 Estourando a pipoca digital...",
@@ -175,10 +191,11 @@ export default function RecommendPage() {
   const { openLogin } = useAuthModal();
 
   // Estados do Quiz
-  const [step, setStep] = useState(0); // 0: Start, 1: Vibe/Who, 2: Mood, 3: Era, 4: Loading, 5: Results
+  const [step, setStep] = useState(0); // 0: Start, 1: Vibe/Who, 2: Mood, 3: Era, 4: Priority, 5: Loading, 6: Results
   const [selectedVibe, setSelectedVibe] = useState<Option | null>(null);
   const [selectedMood, setSelectedMood] = useState<Option | null>(null);
   const [selectedEra, setSelectedEra] = useState<Option | null>(null);
+  const [selectedPriority, setSelectedPriority] = useState<Option | null>(null);
 
   // Estados dos Resultados
   const [movies, setMovies] = useState<TMDBMovie[]>([]);
@@ -209,7 +226,7 @@ export default function RecommendPage() {
 
   // Loop de texto do Oráculo
   useEffect(() => {
-    if (step !== 4) return;
+    if (step !== 5) return;
     let idx = 0;
     const interval = setInterval(() => {
       idx = (idx + 1) % ORACLE_MESSAGES.length;
@@ -220,7 +237,7 @@ export default function RecommendPage() {
   }, [step]);
 
   // Função para carregar as recomendações
-  const fetchRecommendations = async (vibe: Option, mood: Option, era: Option) => {
+  const fetchRecommendations = async (vibe: Option, mood: Option, era: Option, priority: Option) => {
     setLoadingResults(true);
     setErrorMsg(null);
     try {
@@ -228,7 +245,9 @@ export default function RecommendPage() {
       const genreId = mood.genreId || (vibe.genreIds ? vibe.genreIds[Math.floor(Math.random() * vibe.genreIds.length)] : undefined);
       const res = await getGamifiedRecommendationsAction({
         genreId,
-        era: era.era
+        era: era.era,
+        priority: priority.id as "popular" | "top_rated",
+        isFamily: vibe.id === "family"
       });
 
       if (res.error) {
@@ -244,7 +263,7 @@ export default function RecommendPage() {
         const randomPhrase = MATCH_PHRASES[Math.floor(Math.random() * MATCH_PHRASES.length)];
         setMatchPhrase(randomPhrase);
         
-        setStep(5);
+        setStep(6);
       }
     } catch (err) {
       setErrorMsg("Erro ao consultar o oráculo do cinema.");
@@ -267,18 +286,23 @@ export default function RecommendPage() {
   const handleEraSelect = (opt: Option) => {
     setSelectedEra(opt);
     setStep(4);
+  };
+
+  const handlePrioritySelect = (opt: Option) => {
+    setSelectedPriority(opt);
+    setStep(5);
     // Dispara a busca após 2.2s de simulação de loading
     setTimeout(() => {
-      fetchRecommendations(selectedVibe!, selectedMood!, opt);
+      fetchRecommendations(selectedVibe!, selectedMood!, selectedEra!, opt);
     }, 2200);
   };
 
   // Girar a Roleta (Re-roll)
   const handleReroll = () => {
-    if (!selectedVibe || !selectedMood || !selectedEra) return;
-    setStep(4);
+    if (!selectedVibe || !selectedMood || !selectedEra || !selectedPriority) return;
+    setStep(5);
     setTimeout(() => {
-      fetchRecommendations(selectedVibe, selectedMood, selectedEra);
+      fetchRecommendations(selectedVibe, selectedMood, selectedEra, selectedPriority);
     }, 1500);
   };
 
@@ -287,6 +311,7 @@ export default function RecommendPage() {
     setSelectedVibe(null);
     setSelectedMood(null);
     setSelectedEra(null);
+    setSelectedPriority(null);
     setMovies([]);
     setStep(0);
   };
@@ -365,11 +390,11 @@ export default function RecommendPage() {
               <Sparkles size={36} />
             </div>
             <h1 style={{ fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 900, marginBottom: 16, color: "#fff" }} className="font-display">
-              CineMatch <span style={{ color: "var(--accent)" }}>Oráculo</span>
+              CineMatch <span style={{ color: "var(--accent)" }}>Oráculo 🔮</span>
             </h1>
             <p style={{ color: "var(--text-secondary)", fontSize: "1.125rem", maxWidth: 540, margin: "0 auto 36px", lineHeight: 1.6 }}>
               Cansou de passar 2 horas navegando no catálogo e indo dormir sem assistir nada? 
-              Responda a 3 perguntinhas rápidas que o nosso oráculo te entrega a call perfeita para o seu humor! 🍿✨
+              Responda a 4 perguntinhas rápidas que o nosso oráculo te entrega a call perfeita para o seu humor! 🍿✨
             </p>
             <button
               onClick={() => setStep(1)}
@@ -388,7 +413,7 @@ export default function RecommendPage() {
           <div className="fade-in">
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)" }}>
-                Pergunta 1 de 3
+                Pergunta 1 de 4
               </span>
             </div>
             <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", marginBottom: 8 }}>
@@ -444,7 +469,7 @@ export default function RecommendPage() {
           <div className="fade-in">
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)" }}>
-                Pergunta 2 de 3
+                Pergunta 2 de 4
               </span>
               <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>
                 Rolê: {selectedVibe?.label}
@@ -503,7 +528,7 @@ export default function RecommendPage() {
           <div className="fade-in">
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)" }}>
-                Pergunta 3 de 3
+                Pergunta 3 de 4
               </span>
               <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>
                 Rolê: {selectedVibe?.label} • Humor: {selectedMood?.label}
@@ -557,8 +582,67 @@ export default function RecommendPage() {
           </div>
         )}
 
-        {/* ─── PASSO 4: CARREGAMENTO ORÁCULO ─── */}
+        {/* ─── PASSO 4: PRIORIDADE / QUALIDADE ─── */}
         {step === 4 && (
+          <div className="fade-in">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--accent)" }}>
+                Pergunta 4 de 4
+              </span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.8125rem" }}>
+                Rolê: {selectedVibe?.label} • Humor: {selectedMood?.label} • Época: {selectedEra?.label}
+              </span>
+            </div>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#fff", marginBottom: 8 }}>
+              O que você prefere priorizar hoje? 🔥🏆
+            </h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.9375rem", marginBottom: 32 }}>
+              Escolha entre o hype do público ou filmes aclamados com notas altas.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
+              {PRIORITY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => handlePrioritySelect(opt)}
+                  className="quiz-card-btn"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-lg)",
+                    padding: "20px 24px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 20,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.25s",
+                    color: "#fff"
+                  }}
+                >
+                  <span style={{ fontSize: "2rem", width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface-2)", borderRadius: "var(--radius)" }}>
+                    {opt.emoji}
+                  </span>
+                  <div>
+                    <h3 style={{ fontSize: "1.0625rem", fontWeight: 700, marginBottom: 4 }}>{opt.label}</h3>
+                    <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>{opt.description}</p>
+                  </div>
+                  <ChevronRight size={18} style={{ marginLeft: "auto", color: "var(--text-muted)" }} />
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setStep(3)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", marginTop: 28, fontSize: "0.875rem" }}
+            >
+              <ArrowLeft size={14} /> Voltar à pergunta anterior
+            </button>
+          </div>
+        )}
+
+        {/* ─── PASSO 5: CARREGAMENTO ORÁCULO ─── */}
+        {step === 5 && (
           <div style={{ textAlign: "center", padding: "80px 0" }} className="fade-in">
             <Loader2 size={48} className="animate-spin" color="var(--accent)" style={{ margin: "0 auto 28px" }} />
             <h3 style={{ fontSize: "1.375rem", fontWeight: 700, color: "#fff", minHeight: 36 }}>
@@ -570,8 +654,8 @@ export default function RecommendPage() {
           </div>
         )}
 
-        {/* ─── PASSO 5: RESULTADO DO JOGO ─── */}
-        {step === 5 && (
+        {/* ─── PASSO 6: RESULTADO DO JOGO ─── */}
+        {step === 6 && (
           <div className="fade-in">
             
             {/* Mensagem de Erro */}

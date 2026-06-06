@@ -1,27 +1,53 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getMovieDetails } from "@/lib/tmdb";
-import ProfileHeader from "@/components/profile/ProfileHeader";
+import PublicProfileHeader from "@/components/profile/PublicProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import { computeUserBadges, type MovieMeta } from "@/lib/badges";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Meu Perfil | CineVerse",
-  description: "Gerencie seu perfil, troque seu avatar e acompanhe seu histórico de avaliações, watchlist e favoritos destacados no CineVerse.",
-};
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-export default async function ProfilePage() {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { name: true, email: true },
+    });
+    if (!user) {
+      return {
+        title: "Perfil Não Encontrado | CineVerse",
+      };
+    }
+    const name = user.name || user.email.split("@")[0];
+    return {
+      title: `Perfil de ${name} | CineVerse`,
+      description: `Veja as avaliações, conquistas, filmes assistidos e favoritos de ${name} no CineVerse.`,
+    };
+  } catch (error) {
+    return {
+      title: "Perfil | CineVerse",
+    };
+  }
+}
+
+export default async function PublicProfilePage({ params }: PageProps) {
+  const { id: targetUserId } = await params;
   const session = await auth();
-  
-  if (!session?.user?.id) {
-    redirect("/login");
+  const currentUserId = session?.user?.id;
+
+  // Se o usuário tentar visualizar seu próprio perfil público, redireciona para a página administrativa /profile
+  if (currentUserId === targetUserId) {
+    redirect("/profile");
   }
 
-  // Buscar dados do usuário com críticas, assistidos, watchlist e favoritos destacados
+  // Buscar dados do usuário alvo
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: targetUserId },
     include: {
       reviews: {
         orderBy: { createdAt: "desc" },
@@ -42,8 +68,31 @@ export default async function ProfilePage() {
   });
 
   if (!user) {
-    redirect("/login");
+    notFound();
   }
+
+  // Verificar se o usuário logado segue o usuário alvo
+  let isFollowing = false;
+  if (currentUserId) {
+    const follow = await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: currentUserId,
+          followingId: targetUserId,
+        },
+      },
+    });
+    isFollowing = !!follow;
+  }
+
+  // Contagem de seguidores e seguindo do usuário alvo
+  const followersCount = await prisma.follow.count({
+    where: { followingId: targetUserId },
+  });
+
+  const followingCount = await prisma.follow.count({
+    where: { followerId: targetUserId },
+  });
 
   // 1. Carregar detalhes do TMDB para as avaliações
   const reviewsWithDetails = await Promise.all(
@@ -121,7 +170,7 @@ export default async function ProfilePage() {
     })
   );
 
-  // 4. Carregar detalhes do TMDB para os 5 favoritos destacados
+  // 4. Carregar detalhes do TMDB para os favoritos destacados
   const featuredWithDetails = await Promise.all(
     user.featuredFavorites.map(async (fav: any) => {
       try {
@@ -176,22 +225,13 @@ export default async function ProfilePage() {
             : undefined,
         });
       } catch {
-        // ignorar filmes que falham
+        // ignorar
       }
     })
   );
 
   const badgeResults = computeUserBadges(movieMetas);
-
-  // Contagem de seguidores e seguindo do usuário atual
-  const [followersCount, followingCount] = await Promise.all([
-    prisma.follow.count({
-      where: { followingId: session.user.id },
-    }),
-    prisma.follow.count({
-      where: { followerId: session.user.id },
-    }),
-  ]);
+  const userName = user.name || user.email.split("@")[0];
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", paddingBottom: 80 }}>
@@ -235,9 +275,9 @@ export default async function ProfilePage() {
           paddingTop: 140,
         }}
       >
-        {/* 1. Header do Perfil (Com o Top 5 e o Pop-up de configurações) */}
-        <ProfileHeader
-          userId={session.user.id}
+        {/* Header do Perfil Público */}
+        <PublicProfileHeader
+          userId={targetUserId}
           user={{
             name: user.name,
             email: user.email,
@@ -251,11 +291,13 @@ export default async function ProfilePage() {
             totalWatchlist,
           }}
           featuredFavorites={featuredWithDetails}
-          followersCount={followersCount}
-          followingCount={followingCount}
+          initialFollowersCount={followersCount}
+          initialFollowingCount={followingCount}
+          initialIsFollowing={isFollowing}
+          isLoggedIn={!!currentUserId}
         />
 
-        {/* 2. Tabs das Coleções (Avaliações / Assistidos / Watchlist / Conquistas) */}
+        {/* Tabs Públicas */}
         <div style={{ marginTop: 24 }}>
           <ProfileTabs
             reviews={reviewsWithDetails}
@@ -263,6 +305,8 @@ export default async function ProfilePage() {
             watchlist={watchlistWithDetails}
             badgeResults={badgeResults}
             essays={user.essays}
+            isPublic={true}
+            userName={userName}
           />
         </div>
       </div>

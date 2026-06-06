@@ -3,16 +3,18 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, MessageSquare, Eye, Bookmark, Trophy } from "lucide-react";
+import { Star, MessageSquare, Eye, Bookmark, Trophy, FileText } from "lucide-react";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import BadgesPanel from "./BadgesPanel";
 import type { BadgeResult } from "@/lib/badges";
+import SpoilerReviewContent from "@/components/reviews/SpoilerReviewContent";
 
 interface ReviewItem {
   id: string;
   tmdbId: number;
   rating: number;
   content: string;
+  isSpoiler: boolean;
   createdAt: Date;
   movieTitle: string;
   moviePoster: string | null;
@@ -29,22 +31,45 @@ interface MovieItem {
   voteAverage: number;
 }
 
+interface EssayItem {
+  id: string;
+  title: string;
+  content: string;
+  tmdbId: number;
+  movieTitle: string;
+  moviePoster: string | null;
+  isSpoiler: boolean;
+  createdAt: Date;
+}
+
 interface ProfileTabsProps {
   reviews: ReviewItem[];
   watched: MovieItem[];
   watchlist: MovieItem[];
   badgeResults: BadgeResult[];
+  essays?: EssayItem[];
+  isPublic?: boolean;
+  userName?: string | null;
 }
 
-type TabType = "reviews" | "watched" | "watchlist" | "badges";
+type TabType = "reviews" | "watched" | "watchlist" | "badges" | "essays";
 
-export default function ProfileTabs({ reviews, watched, watchlist, badgeResults }: ProfileTabsProps) {
+export default function ProfileTabs({
+  reviews,
+  watched,
+  watchlist,
+  badgeResults,
+  essays = [],
+  isPublic = false,
+  userName,
+}: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("reviews");
 
   const unlockedBadges = badgeResults.filter((b) => b.unlocked).length;
 
   const tabItems = [
     { id: "reviews" as const, label: "Avaliações", count: reviews.length, icon: MessageSquare },
+    { id: "essays" as const, label: "Resenhas", count: essays.length, icon: FileText },
     { id: "watched" as const, label: "Assistidos", count: watched.length, icon: Eye },
     { id: "watchlist" as const, label: "Watchlist", count: watchlist.length, icon: Bookmark },
     { id: "badges" as const, label: "Conquistas", count: unlockedBadges, icon: Trophy },
@@ -121,7 +146,11 @@ export default function ProfileTabs({ reviews, watched, watchlist, badgeResults 
               <div className="empty-tab-state">
                 <MessageSquare size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
                 <h4 style={{ color: "#fff", marginBottom: 6 }}>Nenhuma avaliação registrada</h4>
-                <p>Você ainda não escreveu nenhuma crítica. Explore os filmes e registre sua nota!</p>
+                <p>
+                  {isPublic
+                    ? `${userName || "Este usuário"} ainda não escreveu nenhuma crítica.`
+                    : "Você ainda não escreveu nenhuma crítica. Explore os filmes e registre sua nota!"}
+                </p>
               </div>
             ) : (
               reviews.map((review) => (
@@ -164,7 +193,9 @@ export default function ProfileTabs({ reviews, watched, watchlist, badgeResults 
                       </div>
                     </div>
 
-                    <p className="item-comment">{review.content}</p>
+                    <div style={{ margin: "8px 0 16px" }}>
+                      <SpoilerReviewContent content={review.content} isSpoiler={review.isSpoiler} />
+                    </div>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -181,6 +212,94 @@ export default function ProfileTabs({ reviews, watched, watchlist, badgeResults 
           </div>
         )}
 
+        {/* TAB DE RESENHAS LONGAS */}
+        {activeTab === "essays" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            {essays.length === 0 ? (
+              <div className="empty-tab-state">
+                <FileText size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
+                <h4 style={{ color: "#fff", marginBottom: 6 }}>Nenhuma resenha escrita</h4>
+                <p>
+                  {isPublic
+                    ? `${userName || "Este usuário"} ainda não escreveu nenhuma resenha editorial.`
+                    : "Você ainda não escreveu nenhuma resenha editorial. Crie um artigo detalhado na página de Resenhas!"}
+                </p>
+              </div>
+            ) : (
+              essays.map((essay) => (
+                <div key={essay.id} className="profile-item-card">
+                  {/* Poster */}
+                  <Link href={`/resenhas/${essay.id}`} className="poster-link">
+                    {essay.moviePoster ? (
+                      <Image
+                        src={getTMDBImageUrl(essay.moviePoster, "w185")}
+                        alt={essay.movieTitle}
+                        fill
+                        sizes="70px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.6rem",
+                          color: "var(--text-muted)",
+                          padding: 4,
+                          textAlign: "center",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {essay.movieTitle}
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Info */}
+                  <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                      <div>
+                        <Link href={`/resenhas/${essay.id}`} style={{ color: "#fff", fontWeight: 800, fontSize: "1.125rem", textDecoration: "none" }} className="essay-title-link">
+                          {essay.title}
+                        </Link>
+                        <span
+                          style={{
+                            fontSize: "0.6875rem",
+                            fontWeight: 700,
+                            color: "var(--accent)",
+                            background: "var(--accent-dim)",
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            marginLeft: 10,
+                          }}
+                        >
+                          {essay.movieTitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", margin: "8px 0 16px 0", lineHeight: 1.5 }}>
+                      {essay.content.replace(/[#*`>!\[\]()]/g, "").slice(0, 150) + "..."}
+                    </p>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto" }}>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                        Publicado em {new Date(essay.createdAt).toLocaleDateString("pt-BR")}
+                      </span>
+                      <Link href={`/resenhas/${essay.id}`} style={{ fontSize: "0.75rem", color: "var(--accent)", fontWeight: 600 }}>
+                        Ler artigo completo &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
         {/* TAB DE ASSISTIDOS */}
         {activeTab === "watched" && (
           <div className="movie-grid-container">
@@ -188,7 +307,11 @@ export default function ProfileTabs({ reviews, watched, watchlist, badgeResults 
               <div className="empty-tab-state">
                 <Eye size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
                 <h4 style={{ color: "#fff", marginBottom: 6 }}>Nenhum filme assistido ainda</h4>
-                <p>Marque os filmes como assistidos nas páginas de detalhes para vê-los listados aqui.</p>
+                <p>
+                  {isPublic
+                    ? `${userName || "Este usuário"} ainda não marcou nenhum filme como assistido.`
+                    : "Marque os filmes como assistidos nas páginas de detalhes para vê-los listados aqui."}
+                </p>
               </div>
             ) : (
               <div className="profile-movies-grid">
@@ -231,8 +354,14 @@ export default function ProfileTabs({ reviews, watched, watchlist, badgeResults 
             {watchlist.length === 0 ? (
               <div className="empty-tab-state">
                 <Bookmark size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
-                <h4 style={{ color: "#fff", marginBottom: 6 }}>Sua Watchlist está vazia</h4>
-                <p>Adicione filmes na sua Watchlist para planejar suas próximas sessões de cinema.</p>
+                <h4 style={{ color: "#fff", marginBottom: 6 }}>
+                  {isPublic ? "Watchlist vazia" : "Sua Watchlist está vazia"}
+                </h4>
+                <p>
+                  {isPublic
+                    ? `A Watchlist de ${userName || "este usuário"} está vazia.`
+                    : "Adicione filmes na sua Watchlist para planejar suas próximas sessões de cinema."}
+                </p>
               </div>
             ) : (
               <div className="profile-movies-grid">

@@ -74,8 +74,18 @@ export async function discoverMovies(params: {
   minRating?: number;
   page?: number;
   sortBy?: string;
+  certificationCountry?: string;
+  certificationLte?: string;
 }): Promise<TMDBPagedResponse<TMDBMovie>> {
-  const { genreId, year, minRating = 0, page = 1, sortBy = "vote_average.desc" } = params;
+  const { 
+    genreId, 
+    year, 
+    minRating = 0, 
+    page = 1, 
+    sortBy = "vote_average.desc",
+    certificationCountry,
+    certificationLte
+  } = params;
 
   const extraParams: Record<string, string | number | boolean> = {
     sort_by: sortBy,
@@ -86,6 +96,8 @@ export async function discoverMovies(params: {
   if (genreId) extraParams["with_genres"] = genreId;
   if (year) extraParams["primary_release_year"] = year;
   if (minRating > 0) extraParams["vote_average.gte"] = minRating;
+  if (certificationCountry) extraParams["certification_country"] = certificationCountry;
+  if (certificationLte) extraParams["certification.lte"] = certificationLte;
 
   return tmdbFetch<TMDBPagedResponse<TMDBMovie>>("/discover/movie", extraParams);
 }

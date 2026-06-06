@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Star, Clock, Calendar, Globe, Film, User as UserIcon, MessageSquare } from "lucide-react";
+import { Star, Clock, Calendar, Globe, Film, User as UserIcon, MessageSquare, BookOpen, Plus } from "lucide-react";
 import { getMovieDetails, getTMDBImageUrl, getTMDBMovieReviews } from "@/lib/tmdb";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -8,6 +8,10 @@ import ReviewForm from "@/components/reviews/ReviewForm";
 import MovieDetailActions from "@/components/movies/MovieDetailActions";
 import CommunityVibeTracker from "@/components/reviews/CommunityVibeTracker";
 import SpoilerReviewContent from "@/components/reviews/SpoilerReviewContent";
+import LikeReviewButton from "@/components/reviews/LikeReviewButton";
+import LikeEssayButton from "@/components/reviews/LikeEssayButton";
+import ReviewCommentsSection from "@/components/reviews/ReviewCommentsSection";
+import Link from "next/link";
 import { HOT_TAKES } from "@/types/reviews";
 
 import type { Metadata } from "next";
@@ -87,13 +91,39 @@ export default async function MovieDetailPage({ params }: PageProps) {
     initialSaved = !!watchlistRes;
   }
 
-  // Buscar todas as avaliações locais e críticas do TMDB em paralelo
-  const [reviews, tmdbReviews] = await Promise.all([
+  // Buscar todas as avaliações locais, críticas do TMDB e resenhas editoriais em paralelo
+  const [reviews, tmdbReviews, essays] = await Promise.all([
     prisma.review.findMany({
       where: { tmdbId },
       include: {
         user: {
           select: {
+            id: true,
+            name: true,
+            image: true,
+            email: true,
+          },
+        },
+        likes: {
+          select: {
+            userId: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    getTMDBMovieReviews(tmdbId),
+    prisma.essay.findMany({
+      where: { tmdbId },
+      include: {
+        user: {
+          select: {
+            id: true,
             name: true,
             image: true,
             email: true,
@@ -102,7 +132,6 @@ export default async function MovieDetailPage({ params }: PageProps) {
       },
       orderBy: { createdAt: "desc" },
     }),
-    getTMDBMovieReviews(tmdbId),
   ]);
 
   const year = movie.release_date ? new Date(movie.release_date).getFullYear() : "—";
@@ -579,6 +608,173 @@ export default async function MovieDetailPage({ params }: PageProps) {
             </section>
           )}
 
+          {/* ─── RESENHAS EDITORIAIS ─────────────────────────────────────── */}
+          <section style={{ marginTop: 56, borderTop: "1px solid var(--border)", paddingTop: 48 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <h2
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: "#fff",
+                  margin: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <BookOpen size={20} color="var(--accent)" />
+                Resenhas Editoriais
+              </h2>
+              <Link
+                href={session?.user?.id ? `/resenhas/new?movieId=${tmdbId}` : "/login"}
+                style={{
+                  fontSize: "0.8125rem",
+                  fontWeight: 700,
+                  color: "var(--accent)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <Plus size={14} />
+                Escrever Resenha
+              </Link>
+            </div>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: 32 }}>
+              Análises completas e ensaios aprofundados sobre o filme escritos por cinéfilos da comunidade.
+            </p>
+
+            {essays.length === 0 ? (
+              <div
+                style={{
+                  padding: "40px 24px",
+                  textAlign: "center",
+                  background: "var(--surface)",
+                  border: "1px dashed var(--border)",
+                  borderRadius: "var(--radius)",
+                  color: "var(--text-secondary)",
+                  fontSize: "0.875rem",
+                }}
+              >
+                Nenhuma resenha editorial escrita para este filme ainda.{" "}
+                <Link
+                  href={session?.user?.id ? `/resenhas/new?movieId=${tmdbId}` : "/login"}
+                  style={{ color: "var(--accent)", fontWeight: 600, textDecoration: "underline" }}
+                >
+                  Seja o primeiro a escrever!
+                </Link>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                  gap: 20,
+                }}
+              >
+                {essays.map((essay) => {
+                  const authorName = essay.user.name || essay.user.email.split("@")[0];
+                  const cleanPreview = essay.content
+                    .replace(/[#*`>!\[\]()]/g, "")
+                    .slice(0, 120) + "...";
+
+                  return (
+                    <div
+                      key={essay.id}
+                      style={{
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-lg)",
+                        padding: 24,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                        transition: "all 0.25s ease",
+                      }}
+                      className="movie-detail-essay-card"
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <h4 style={{ margin: 0, fontSize: "1.0625rem", fontWeight: 700, lineHeight: 1.3 }}>
+                          <Link
+                            href={`/resenhas/${essay.id}`}
+                            style={{ color: "#fff", textDecoration: "none" }}
+                            className="essay-title-hover"
+                          >
+                            {essay.title}
+                          </Link>
+                        </h4>
+                        {essay.isSpoiler && (
+                          <span
+                            style={{
+                              fontSize: "0.625rem",
+                              fontWeight: 800,
+                              color: "var(--red)",
+                              background: "rgba(224, 82, 82, 0.1)",
+                              border: "1px solid rgba(224, 82, 82, 0.2)",
+                              padding: "1px 6px",
+                              borderRadius: 4,
+                              flexShrink: 0,
+                            }}
+                          >
+                            SPOILER
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.8125rem", margin: 0, lineHeight: 1.5 }}>
+                        {cleanPreview}
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: "auto",
+                          paddingTop: 12,
+                          borderTop: "1px solid rgba(255,255,255,0.03)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <Link
+                            href={`/profile/${essay.user.id}`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              fontSize: "0.75rem",
+                              color: "var(--text-muted)",
+                              textDecoration: "none",
+                            }}
+                            className="essay-author-hover"
+                          >
+                            <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border)" }}>
+                              <img
+                                src={essay.user.image || "/placeholder-avatar.jpg"}
+                                alt={authorName}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            </div>
+                            <span style={{ fontWeight: 600 }}>{authorName}</span>
+                          </Link>
+
+                          <LikeEssayButton
+                            essayId={essay.id}
+                            initialLikesCount={essay.likes.length}
+                            initialLiked={essay.likes.some((like) => like.userId === session?.user?.id)}
+                            isLoggedIn={!!session?.user?.id}
+                          />
+                        </div>
+                        <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                          {new Date(essay.createdAt).toLocaleDateString("pt-BR")}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           {/* ─── AVALIAÇÕES E REVIEWS ─────────────────────────────────────── */}
           <section style={{ marginTop: 40, borderTop: "1px solid var(--border)", paddingTop: 48 }}>
             <h2
@@ -662,41 +858,48 @@ export default async function MovieDetailPage({ params }: PageProps) {
                           {/* Top: Usuário e Nota */}
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              {rev.user.image ? (
-                                <div style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border)" }}>
-                                  <img
-                                    src={rev.user.image}
-                                    alt={rev.user.name || "User Avatar"}
+                              <Link href={`/profile/${rev.user.id}`}>
+                                {rev.user.image ? (
+                                  <div style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border)" }}>
+                                    <img
+                                      src={rev.user.image}
+                                      alt={rev.user.name || "User Avatar"}
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div
                                     style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
+                                      width: 40,
+                                      height: 40,
+                                      borderRadius: "50%",
+                                      background: "var(--surface-3)",
+                                      border: "1px solid var(--border)",
+                                      color: "var(--accent)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "0.875rem",
+                                      fontWeight: 700,
                                     }}
-                                  />
-                                </div>
-                              ) : (
-                                <div
-                                  style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "50%",
-                                    background: "var(--surface-3)",
-                                    border: "1px solid var(--border)",
-                                    color: "var(--accent)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "0.875rem",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  {userInitials}
-                                </div>
-                              )}
+                                  >
+                                    {userInitials}
+                                  </div>
+                                )}
+                              </Link>
                               <div>
-                                <h4 style={{ fontSize: "0.9375rem", fontWeight: 700, color: "#fff" }}>
-                                  {rev.user.name || rev.user.email.split("@")[0]}
-                                </h4>
+                                <Link 
+                                  href={`/profile/${rev.user.id}`}
+                                  className="review-author-link"
+                                >
+                                  <h4 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: 2 }}>
+                                    {rev.user.name || rev.user.email.split("@")[0]}
+                                  </h4>
+                                </Link>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                                   {new Date(rev.createdAt).toLocaleDateString("pt-BR", {
                                     day: "2-digit",
@@ -752,10 +955,36 @@ export default async function MovieDetailPage({ params }: PageProps) {
 
                           {/* Comentário */}
                           <SpoilerReviewContent content={rev.content} isSpoiler={rev.isSpoiler} />
+
+                          {/* Ações da Review: Curtidas e Comentários */}
+                          <ReviewCommentsSection
+                            reviewId={rev.id}
+                            initialCommentsCount={rev._count?.comments ?? 0}
+                            isLoggedIn={!!session?.user?.id}
+                            currentUserId={session?.user?.id}
+                            isAdmin={session?.user?.role === "ADMIN"}
+                          >
+                            <LikeReviewButton
+                              reviewId={rev.id}
+                              initialLikesCount={rev.likes.length}
+                              initialLiked={rev.likes.some((like) => like.userId === session?.user?.id)}
+                              isLoggedIn={!!session?.user?.id}
+                            />
+                          </ReviewCommentsSection>
                         </div>
                       );
                     })
                   )}
+                  <style>{`
+                    .review-author-link {
+                      text-decoration: none;
+                      color: #fff !important;
+                      transition: color 0.15s ease;
+                    }
+                    .review-author-link:hover {
+                      color: var(--accent) !important;
+                    }
+                  `}</style>
                 </div>
               </div>
             </div>
@@ -924,6 +1153,24 @@ export default async function MovieDetailPage({ params }: PageProps) {
         .cast-card:hover {
           transform: translateY(-4px);
           border-color: var(--border-hover) !important;
+        }
+        .movie-detail-essay-card:hover {
+          border-color: var(--border-hover) !important;
+          background: var(--surface-2) !important;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .essay-title-hover {
+          transition: color 0.2s;
+        }
+        .essay-title-hover:hover {
+          color: var(--accent) !important;
+        }
+        .essay-author-hover {
+          transition: color 0.2s;
+        }
+        .essay-author-hover:hover {
+          color: var(--accent) !important;
         }
       `}</style>
     </div>

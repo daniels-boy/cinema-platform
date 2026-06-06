@@ -43,7 +43,9 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Início" },
-    { href: "/recommend", label: "Recomendações" },
+    { href: "/recommend", label: "Oráculo" },
+    { href: "/reviews", label: "Reviews" },
+    { href: "/resenhas", label: "Resenhas" },
   ];
 
   // No home sem scroll: header completamente transparente

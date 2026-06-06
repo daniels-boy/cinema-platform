@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil, Star, MessageSquare, Eye, Bookmark, Plus, Film } from "lucide-react";
-import ProfileSettings from "./ProfileSettings";
-import FollowersModal from "./FollowersModal";
+import { Star, MessageSquare, Eye, Bookmark, Film, UserPlus, UserMinus, Loader2 } from "lucide-react";
+import { toggleFollowUser } from "@/actions/social";
+import { useAuthModal } from "@/contexts/AuthModalContext";
 import { getTMDBImageUrl } from "@/lib/tmdb";
+import FollowersModal from "./FollowersModal";
 
 interface FeaturedFavoriteItem {
   position: number;
@@ -15,7 +16,7 @@ interface FeaturedFavoriteItem {
   moviePoster: string | null;
 }
 
-interface ProfileHeaderProps {
+interface PublicProfileHeaderProps {
   userId: string;
   user: {
     name: string | null;
@@ -30,23 +31,54 @@ interface ProfileHeaderProps {
     totalWatchlist: number;
   };
   featuredFavorites: FeaturedFavoriteItem[];
-  followersCount: number;
-  followingCount: number;
+  initialFollowersCount: number;
+  initialFollowingCount: number;
+  initialIsFollowing: boolean;
+  isLoggedIn: boolean;
 }
 
-export default function ProfileHeader({
+export default function PublicProfileHeader({
   userId,
   user,
   stats,
   featuredFavorites,
-  followersCount,
-  followingCount,
-}: ProfileHeaderProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  initialFollowersCount,
+  initialFollowingCount,
+  initialIsFollowing,
+  isLoggedIn,
+}: PublicProfileHeaderProps) {
+  const { openLogin } = useAuthModal();
+  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [followersCount, setFollowersCount] = useState(initialFollowersCount);
+  const [isPending, startTransition] = useTransition();
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
 
-  // Garantizar que todos os slots de 1 a 5 existam (preenchendo os vazios com placeholders)
+  const handleFollow = () => {
+    if (!isLoggedIn) {
+      openLogin();
+      return;
+    }
+    
+    // Optimistic Update
+    const previousFollowing = isFollowing;
+    const previousCount = followersCount;
+    
+    setIsFollowing(!isFollowing);
+    setFollowersCount(isFollowing ? followersCount - 1 : followersCount + 1);
+    
+    startTransition(async () => {
+      const res = await toggleFollowUser(userId);
+      if (res.error) {
+        // Rollback
+        setIsFollowing(previousFollowing);
+        setFollowersCount(previousCount);
+      } else if (res.following !== undefined) {
+        setIsFollowing(res.following);
+      }
+    });
+  };
+
   const slots = [1, 2, 3, 4, 5].map((pos) => {
     return featuredFavorites.find((f) => f.position === pos) || null;
   });
@@ -92,9 +124,9 @@ export default function ProfileHeader({
           />
         </div>
 
-        {/* Nome, Lápis Editar e Estatísticas */}
+        {/* Nome, Botão Seguir e Estatísticas */}
         <div style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 6, flexWrap: "wrap" }}>
             <h1
               style={{
                 fontSize: "2rem",
@@ -107,36 +139,55 @@ export default function ProfileHeader({
               {user.name || user.email.split("@")[0]}
             </h1>
 
-            {/* Lápis de Edição */}
+            {/* Botão Seguir / Seguindo */}
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleFollow}
+              disabled={isPending}
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid var(--border)",
-                borderRadius: "50%",
-                width: 32,
-                height: 32,
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
-                color: "var(--text-secondary)",
+                gap: 8,
+                padding: "6px 16px",
+                borderRadius: 20,
+                fontSize: "0.8125rem",
+                fontWeight: 700,
                 cursor: "pointer",
                 transition: "all 0.2s",
-                padding: 0,
+                background: isFollowing ? "rgba(255,255,255,0.06)" : "var(--accent)",
+                border: `1px solid ${isFollowing ? "var(--border)" : "var(--accent)"}`,
+                color: isFollowing ? "rgba(255,255,255,0.8)" : "#0a0a0f",
+                outline: "none",
               }}
-              title="Editar Perfil"
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "var(--accent)";
-                e.currentTarget.style.background = "var(--accent-dim)";
-                e.currentTarget.style.borderColor = "rgba(232, 180, 75, 0.3)";
+                if (isFollowing) {
+                  e.currentTarget.style.background = "rgba(224,82,82,0.1)";
+                  e.currentTarget.style.borderColor = "rgba(224,82,82,0.2)";
+                  e.currentTarget.style.color = "#e05252";
+                } else {
+                  e.currentTarget.style.filter = "brightness(1.1)";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = "var(--text-secondary)";
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                e.currentTarget.style.borderColor = "var(--border)";
+                if (isFollowing) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                } else {
+                  e.currentTarget.style.filter = "none";
+                }
               }}
             >
-              <Pencil size={14} />
+              {isPending ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : isFollowing ? (
+                <>
+                  <UserMinus size={13} /> Deixar de Seguir
+                </>
+              ) : (
+                <>
+                  <UserPlus size={13} /> Seguir
+                </>
+              )}
             </button>
           </div>
 
@@ -175,7 +226,7 @@ export default function ProfileHeader({
               onMouseEnter={(e) => e.currentTarget.style.textDecoration = "underline"}
               onMouseLeave={(e) => e.currentTarget.style.textDecoration = "none"}
             >
-              {followingCount} seguindo
+              {initialFollowingCount} seguindo
             </button>
           </p>
 
@@ -238,7 +289,7 @@ export default function ProfileHeader({
           Favoritos Destacados
         </h3>
 
-        {/* Linha dos 5 Filmes (Estilo Letterboxd) */}
+        {/* Linha dos 5 Filmes */}
         <div
           style={{
             display: "grid",
@@ -282,51 +333,27 @@ export default function ProfileHeader({
             }
 
             return (
-              <button
+              <div
                 key={pos}
-                onClick={() => setIsModalOpen(true)}
                 style={{
                   aspectRatio: "2/3",
                   borderRadius: "var(--radius-sm)",
-                  border: "1px dashed var(--border)",
+                  border: "1px dashed rgba(255,255,255,0.05)",
                   background: "rgba(255,255,255,0.01)",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 8,
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  padding: 8,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border-hover)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                  e.currentTarget.style.color = "var(--text-secondary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.01)";
-                  e.currentTarget.style.color = "var(--text-muted)";
+                  color: "rgba(255,255,255,0.15)",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
                 }}
               >
-                <Plus size={16} />
-                <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>Slot {pos}</span>
-              </button>
+                Vazio
+              </div>
             );
           })}
         </div>
       </div>
-
-      {/* Modal de Configuração / Edição de Perfil */}
-      <ProfileSettings
-        initialName={user.name}
-        initialImage={user.image}
-        initialFeaturedFavorites={featuredFavorites}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
 
       {/* Modais de Seguidores e Seguindo */}
       <FollowersModal
