@@ -129,6 +129,11 @@ export default async function MovieDetailPage({ params }: PageProps) {
             email: true,
           },
         },
+        likes: {
+          select: {
+            userId: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
