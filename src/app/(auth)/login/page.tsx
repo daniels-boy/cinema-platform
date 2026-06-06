@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Lock, Film, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -99,31 +100,14 @@ function LoginForm() {
         }}
       >
         {/* Logo / Link Home */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28, alignSelf: "flex-start" }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              background: "var(--accent)",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Film size={18} color="#0a0a0f" strokeWidth={2.5} />
-          </div>
-          <span
-            className="font-display"
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: 800,
-              color: "#fff",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            CineVerse
-          </span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", marginBottom: 28, alignSelf: "flex-start" }}>
+          <Image
+            src="/cineverse-logo.png"
+            alt="CineVerse Logo"
+            width={34}
+            height={34}
+            style={{ objectFit: "contain" }}
+          />
         </Link>
 
         {/* Título */}

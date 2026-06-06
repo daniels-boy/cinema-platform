@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Film, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Início" },
@@ -61,41 +62,22 @@ export default function Footer() {
             {/* Brand */}
             <div>
               <Link
-                href="/"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 16,
-                  textDecoration: "none",
-                }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    background: "var(--accent)",
-                    borderRadius: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Film size={20} color="#0a0a0f" strokeWidth={2.5} />
-                </div>
-                <span
-                  className="font-display"
-                  style={{
-                    fontSize: "1.25rem",
-                    fontWeight: 900,
-                    color: "#fff",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  CineVerse
-                </span>
-              </Link>
+              href="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                marginBottom: 16,
+                textDecoration: "none",
+              }}
+            >
+              <Image
+                src="/cineverse-logo.png"
+                alt="CineVerse Logo"
+                width={36}
+                height={36}
+                style={{ objectFit: "contain" }}
+              />
+            </Link>
               <p
                 style={{
                   color: "rgba(255,255,255,0.4)",

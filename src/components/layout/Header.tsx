@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Search, Film, Menu, X, Sparkles, User, LogOut, LogIn } from "lucide-react";
+import { Search, Menu, X, User, LogOut, LogIn } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 
@@ -77,32 +77,15 @@ export default function Header() {
           {/* Logo */}
           <Link
             href="/"
-            style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}
+            style={{ display: "flex", alignItems: "center", flexShrink: 0 }}
           >
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                background: "var(--accent)",
-                borderRadius: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Film size={20} color="#0a0a0f" strokeWidth={2.5} />
-            </div>
-            <span
-              className="font-display"
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: 900,
-                color: "#fff",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              CineVerse
-            </span>
+            <Image
+              src="/cineverse-logo.png"
+              alt="CineVerse Logo"
+              width={36}
+              height={36}
+              style={{ objectFit: "contain" }}
+            />
           </Link>
 
           {/* Nav Links — desktop */}

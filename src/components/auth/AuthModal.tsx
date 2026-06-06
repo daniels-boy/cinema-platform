@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Mail, Lock, User, Film, AlertCircle, Loader2 } from "lucide-react";
+import { X, Mail, Lock, User, AlertCircle, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/contexts/AuthModalContext";
@@ -172,31 +173,14 @@ export default function AuthModal() {
         </button>
 
         {/* Logo / Ícone */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              background: "var(--accent)",
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Film size={18} color="#0a0a0f" strokeWidth={2.5} />
-          </div>
-          <span
-            className="font-display"
-            style={{
-              fontSize: "1.125rem",
-              fontWeight: 800,
-              color: "#fff",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            CineVerse
-          </span>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 28 }}>
+          <Image
+            src="/cineverse-logo.png"
+            alt="CineVerse Logo"
+            width={34}
+            height={34}
+            style={{ objectFit: "contain" }}
+          />
         </div>
 
         {/* Cabeçalho */}

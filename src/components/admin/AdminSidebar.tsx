@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, MessageSquare, Users, Sparkles, Film, LogOut } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, Sparkles, LogOut } from "lucide-react";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 
 const navItems = [
@@ -32,20 +33,14 @@ export default function AdminSidebar() {
     >
       {/* Logo */}
       <div style={{ padding: "0 20px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: "linear-gradient(135deg, #e8b44b, #f5d07a)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <Film size={18} color="#0a0a0f" />
-          </div>
-          <div>
-            <p style={{ fontSize: "0.8125rem", fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>CineVerse</p>
-            <p style={{ fontSize: "0.65rem", color: "var(--accent)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Admin</p>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Image
+            src="/cineverse-logo.png"
+            alt="CineVerse Logo"
+            width={36}
+            height={36}
+            style={{ objectFit: "contain" }}
+          />
         </div>
       </div>
 
