@@ -270,7 +270,7 @@ export default async function ResenhasPage() {
                           <span style={{ fontWeight: 700 }}>{authorName}</span>
                         </Link>
                         
-                        <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} style={{ display: "inline-flex" }}>
+                        <div style={{ display: "inline-flex" }}>
                           <LikeEssayButton
                             essayId={essay.id}
                             initialLikesCount={essay.likes.length}
