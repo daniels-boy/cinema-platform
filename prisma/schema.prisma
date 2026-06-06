@@ -18,6 +18,9 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // Para login com credenciais (hash bcrypt)
+  role          String    @default("USER")   // "USER" | "ADMIN"
+  banned        Boolean   @default(false)
+  suspendedUntil DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -83,6 +86,7 @@ model Review {
   rating    Int      // 1 a 5 estrelas
   content   String   @db.Text
   tags      String[] @default([]) // Tags de Reação Rápida ("Hot Takes")
+  isSpoiler Boolean  @default(false) // Marcado pelo admin como spoiler
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -129,4 +133,30 @@ model FeaturedFavorite {
   @@unique([userId, position]) // Apenas um filme por posição para cada usuário
   @@unique([userId, tmdbId])   // Um filme não pode ser repetido nos favoritos destacados do mesmo usuário
   @@map("featured_favorites")
+}
+
+// ─── Admin: Curadoria da Homepage ─────────────────────────────────────────────
+
+model FeaturedBanner {
+  id        String   @id @default(cuid())
+  tmdbId    Int
+  title     String   // Título de exibição (pode ser personalizado)
+  subtitle  String?  // Subtítulo/descrição opcional
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("featured_banners")
+}
+
+model CuratedCollection {
+  id          String   @id @default(cuid())
+  title       String               // Ex: "Especial Halloween"
+  description String?              // Descrição da coleção
+  emoji       String   @default("🎬")
+  tmdbIds     Int[]    @default([]) // IDs dos filmes selecionados
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("curated_collections")
 }

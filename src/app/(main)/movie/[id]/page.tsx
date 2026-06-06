@@ -7,7 +7,9 @@ import { auth } from "@/lib/auth";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import MovieDetailActions from "@/components/movies/MovieDetailActions";
 import CommunityVibeTracker from "@/components/reviews/CommunityVibeTracker";
+import SpoilerReviewContent from "@/components/reviews/SpoilerReviewContent";
 import { HOT_TAKES } from "@/types/reviews";
+
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -749,16 +751,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                           )}
 
                           {/* Comentário */}
-                          <p
-                            style={{
-                              color: "var(--text-secondary)",
-                              fontSize: "0.875rem",
-                              lineHeight: 1.6,
-                              whiteSpace: "pre-line",
-                            }}
-                          >
-                            {rev.content}
-                          </p>
+                          <SpoilerReviewContent content={rev.content} isSpoiler={rev.isSpoiler} />
                         </div>
                       );
                     })

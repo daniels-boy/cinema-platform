@@ -1,12 +1,15 @@
-import { getTrendingMovies, getNowPlayingMovies, getPopularMovies, discoverMovies } from "@/lib/tmdb";
+import { getTrendingMovies, getNowPlayingMovies, getPopularMovies, discoverMovies, getMovieDetails } from "@/lib/tmdb";
 import HeroCarousel from "@/components/movies/HeroCarousel";
 import MovieRow from "@/components/movies/MovieRow";
 import GenreTabsSection from "@/components/movies/GenreTabsSection";
+import FeaturedBannerHero from "@/components/movies/FeaturedBannerHero";
+import CuratedCollectionRow from "@/components/movies/CuratedCollectionRow";
 import Link from "next/link";
 import { Flame, Star, Sparkles, Clapperboard } from "lucide-react";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { TMDBMovie } from "@/types/tmdb";
 
 export const metadata: Metadata = {
   title: "CineVerse — Descubra, Avalie e Compartilhe Cinema",
@@ -66,10 +69,78 @@ export default async function HomePage() {
     }
   }
 
+  // Buscar banner e coleções curadas no banco
+  let activeBanner = null;
+  let activeBannerMovie = null;
+  let curatedCollectionsWithMovies: {
+    id: string;
+    title: string;
+    description: string | null;
+    emoji: string;
+    movies: TMDBMovie[];
+  }[] = [];
+
+  try {
+    const banner = await prisma.featuredBanner.findFirst({
+      orderBy: { createdAt: "desc" },
+    });
+    if (banner) {
+      activeBanner = banner;
+      try {
+        activeBannerMovie = await getMovieDetails(banner.tmdbId);
+      } catch (err) {
+        console.error("Erro ao buscar detalhes do filme do banner:", err);
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao buscar banner destacado do banco:", err);
+  }
+
+  try {
+    const collections = await prisma.curatedCollection.findMany({
+      where: { active: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (collections.length > 0) {
+      // Buscar detalhes dos filmes de cada coleção em paralelo
+      curatedCollectionsWithMovies = await Promise.all(
+        collections.map(async (col) => {
+          const moviePromises = col.tmdbIds.map(async (id) => {
+            try {
+              return await getMovieDetails(id);
+            } catch (err) {
+              console.error(`Erro ao buscar filme ${id} da coleção ${col.title}:`, err);
+              return null;
+            }
+          });
+          const movies = (await Promise.all(moviePromises)).filter(Boolean) as TMDBMovie[];
+          return {
+            id: col.id,
+            title: col.title,
+            description: col.description,
+            emoji: col.emoji,
+            movies,
+          };
+        })
+      );
+    }
+  } catch (err) {
+    console.error("Erro ao buscar coleções curadas:", err);
+  }
+
   return (
     <>
-      {/* ─── HERO CARROSSEL ───────────────────────────────────────────── */}
-      <HeroCarousel movies={trending} />
+      {/* ─── HERO CARROSSEL OU DESTAQUE DO ADMIN ───────────────────────────────── */}
+      {activeBannerMovie ? (
+        <FeaturedBannerHero
+          movie={activeBannerMovie}
+          customTitle={activeBanner?.title}
+          customSubtitle={activeBanner?.subtitle || undefined}
+        />
+      ) : (
+        <HeroCarousel movies={trending} />
+      )}
 
       {/* ─── SEÇÕES DE FILMES ────────────────────────────────────────── */}
       <div style={{ paddingTop: 72, paddingBottom: 40 }}>
@@ -86,6 +157,19 @@ export default async function HomePage() {
             watchedMovieIds={watchedMovieIds}
             watchlistMovieIds={watchlistMovieIds}
           />
+
+          {/* Coleções Curadas do Admin */}
+          {curatedCollectionsWithMovies.map((col) => (
+            <CuratedCollectionRow
+              key={col.id}
+              title={col.title}
+              description={col.description}
+              emoji={col.emoji}
+              movies={col.movies}
+              watchedMovieIds={watchedMovieIds}
+              watchlistMovieIds={watchlistMovieIds}
+            />
+          ))}
 
           {/* Em Cartaz */}
           <section style={{ marginBottom: 56 }}>
@@ -176,3 +260,4 @@ export default async function HomePage() {
     </>
   );
 }
+

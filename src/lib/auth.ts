@@ -32,6 +32,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
         if (!user || !user.password) return null;
 
+        // Bloquear usuários banidos
+        if (user.banned) return null;
+
+        // Bloquear usuários suspensos
+        if (user.suspendedUntil && user.suspendedUntil > new Date()) return null;
+
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) return null;
 
@@ -43,12 +49,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Buscar role atualizado do banco sempre que gera token
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id as string },
+          select: { role: true },
+        });
+        token.role = dbUser?.role ?? "USER";
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
