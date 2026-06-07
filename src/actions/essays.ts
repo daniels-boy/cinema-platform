@@ -119,6 +119,7 @@ export async function getEssays() {
             name: true,
             image: true,
             email: true,
+            vipStatus: true,
           },
         },
         likes: {
@@ -151,6 +152,7 @@ export async function getEssayById(essayId: string) {
             name: true,
             image: true,
             email: true,
+            vipStatus: true,
           },
         },
         likes: {

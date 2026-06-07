@@ -19,6 +19,7 @@ model User {
   image         String?
   password      String?   // Para login com credenciais (hash bcrypt)
   role          String    @default("USER")   // "USER" | "ADMIN"
+  vipStatus     String    @default("FREE")   // "FREE" | "SOMMELIER" | "ACIONISTA"
   banned        Boolean   @default(false)
   suspendedUntil DateTime?
   createdAt     DateTime  @default(now())

@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Menu, X, User, LogOut, LogIn } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useAuthModal } from "@/contexts/AuthModalContext";
+import UserAvatar from "../ui/UserAvatar";
 
 export default function Header() {
   const pathname = usePathname();
@@ -224,24 +225,12 @@ export default function Header() {
                     transition: "all 0.2s",
                   }}
                 >
-                  {session.user?.image ? (
-                    <div style={{ position: "relative", width: 18, height: 18, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
-                      <img
-                        src={session.user.image}
-                        alt="Avatar"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder-avatar.jpg";
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <User size={15} />
-                  )}
+                  <UserAvatar
+                    src={session.user?.image}
+                    alt="Avatar"
+                    size={18}
+                    vipStatus={session.user?.vipStatus}
+                  />
                   <span className="name-label">
                     {session.user?.name?.split(" ")[0]}
                   </span>

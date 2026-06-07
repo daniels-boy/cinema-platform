@@ -4,6 +4,8 @@ import Link from "next/link";
 import { BookOpen, FileText, User, Calendar, Plus, Sparkles, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import LikeEssayButton from "@/components/reviews/LikeEssayButton";
+import UserAvatar from "@/components/ui/UserAvatar";
+import VipBadge from "@/components/ui/VipBadge";
 
 export const metadata: Metadata = {
   title: "Resenhas Longas | CineVerse",
@@ -252,22 +254,16 @@ export default async function ResenhasPage() {
                           style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}
                           className="essay-author-link"
                         >
-                          <div
-                            style={{
-                              width: 20,
-                              height: 20,
-                              borderRadius: "50%",
-                              overflow: "hidden",
-                              border: "1px solid var(--border)",
-                            }}
-                          >
-                            <img
-                              src={essay.user.image || "/placeholder-avatar.jpg"}
-                              alt={authorName}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          </div>
-                          <span style={{ fontWeight: 700 }}>{authorName}</span>
+                          <UserAvatar
+                            src={essay.user.image}
+                            alt={authorName}
+                            size={20}
+                            vipStatus={essay.user.vipStatus}
+                          />
+                          <span style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                            {authorName}
+                            <VipBadge status={essay.user.vipStatus} />
+                          </span>
                         </Link>
                         
                         <div style={{ display: "inline-flex" }}>

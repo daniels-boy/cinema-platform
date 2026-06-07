@@ -48,3 +48,36 @@ export async function updateProfile(data: { name?: string; image?: string }) {
     return { error: "Erro interno ao atualizar o perfil. Tente novamente." };
   }
 }
+
+export async function updateVipStatus(planId: string) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.id) {
+      return { error: "Você precisa estar conectado para assinar um plano VIP." };
+    }
+
+    // Map plan ID to database value
+    let status = "FREE";
+    if (planId === "sommelier") {
+      status = "SOMMELIER";
+    } else if (planId === "ionista") {
+      status = "ACIONISTA";
+    }
+
+    // Update in database
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { vipStatus: status },
+    });
+
+    // Revalidate routes
+    revalidatePath("/vip");
+    revalidatePath("/profile");
+    revalidatePath("/");
+
+    return { success: true, vipStatus: status };
+  } catch (error) {
+    console.error("Erro ao atualizar status VIP:", error);
+    return { error: "Erro interno ao processar a assinatura. Tente novamente." };
+  }
+}

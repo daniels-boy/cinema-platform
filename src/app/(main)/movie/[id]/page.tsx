@@ -13,6 +13,8 @@ import LikeEssayButton from "@/components/reviews/LikeEssayButton";
 import ReviewCommentsSection from "@/components/reviews/ReviewCommentsSection";
 import Link from "next/link";
 import { HOT_TAKES } from "@/types/reviews";
+import UserAvatar from "@/components/ui/UserAvatar";
+import VipBadge from "@/components/ui/VipBadge";
 
 import type { Metadata } from "next";
 
@@ -102,6 +104,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
             name: true,
             image: true,
             email: true,
+            vipStatus: true,
           },
         },
         likes: {
@@ -127,6 +130,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
             name: true,
             image: true,
             email: true,
+            vipStatus: true,
           },
         },
         likes: {
@@ -752,14 +756,16 @@ export default async function MovieDetailPage({ params }: PageProps) {
                             }}
                             className="essay-author-hover"
                           >
-                            <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border)" }}>
-                              <img
-                                src={essay.user.image || "/placeholder-avatar.jpg"}
-                                alt={authorName}
-                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                              />
-                            </div>
-                            <span style={{ fontWeight: 600 }}>{authorName}</span>
+                            <UserAvatar
+                              src={essay.user.image}
+                              alt={authorName}
+                              size={18}
+                              vipStatus={essay.user.vipStatus}
+                            />
+                            <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                              {authorName}
+                              <VipBadge status={essay.user.vipStatus} />
+                            </span>
                           </Link>
 
                           <LikeEssayButton
@@ -863,46 +869,22 @@ export default async function MovieDetailPage({ params }: PageProps) {
                           {/* Top: Usuário e Nota */}
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              <Link href={`/profile/${rev.user.id}`}>
-                                {rev.user.image ? (
-                                  <div style={{ position: "relative", width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1px solid var(--border)" }}>
-                                    <img
-                                      src={rev.user.image}
-                                      alt={rev.user.name || "User Avatar"}
-                                      style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                      }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div
-                                    style={{
-                                      width: 40,
-                                      height: 40,
-                                      borderRadius: "50%",
-                                      background: "var(--surface-3)",
-                                      border: "1px solid var(--border)",
-                                      color: "var(--accent)",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      fontSize: "0.875rem",
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    {userInitials}
-                                  </div>
-                                )}
+                              <Link href={`/profile/${rev.user.id}`} style={{ display: "inline-flex" }}>
+                                <UserAvatar
+                                  src={rev.user.image}
+                                  alt={rev.user.name || "User Avatar"}
+                                  size={40}
+                                  vipStatus={rev.user.vipStatus}
+                                />
                               </Link>
                               <div>
                                 <Link 
                                   href={`/profile/${rev.user.id}`}
                                   className="review-author-link"
                                 >
-                                  <h4 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: 2 }}>
+                                  <h4 style={{ fontSize: "0.9375rem", fontWeight: 700, marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
                                     {rev.user.name || rev.user.email.split("@")[0]}
+                                    <VipBadge status={rev.user.vipStatus} />
                                   </h4>
                                 </Link>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>

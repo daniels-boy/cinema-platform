@@ -6,12 +6,15 @@ import Link from "next/link";
 import { Calendar, User, Trash2, ArrowLeft, ShieldAlert, Film } from "lucide-react";
 import { deleteEssay } from "@/actions/essays";
 import LikeEssayButton from "./LikeEssayButton";
+import UserAvatar from "../ui/UserAvatar";
+import VipBadge from "../ui/VipBadge";
 
 interface UserItem {
   id: string;
   name: string | null;
   image: string | null;
   email: string;
+  vipStatus?: string;
 }
 
 interface LikeItem {
@@ -276,25 +279,16 @@ export default function EssayReader({ essay, currentUserId, isAdmin = false, bac
               style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}
               className="author-avatar-link"
             >
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  border: "2px solid var(--border)",
-                  background: "var(--surface-2)",
-                }}
-              >
-                <img
-                  src={essay.user.image || "/placeholder-avatar.jpg"}
-                  alt={authorName}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
+              <UserAvatar
+                src={essay.user.image}
+                alt={authorName}
+                size={38}
+                vipStatus={essay.user.vipStatus}
+              />
               <div>
-                <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                <p style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fff", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                   {authorName}
+                  <VipBadge status={essay.user.vipStatus} />
                 </p>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Autor Editorial</span>
               </div>

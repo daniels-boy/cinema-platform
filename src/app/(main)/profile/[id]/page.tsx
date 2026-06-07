@@ -283,6 +283,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
             email: user.email,
             image: user.image,
             memberSince,
+            vipStatus: user.vipStatus,
           }}
           stats={{
             totalReviews,

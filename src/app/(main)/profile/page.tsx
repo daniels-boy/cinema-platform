@@ -243,6 +243,7 @@ export default async function ProfilePage() {
             email: user.email,
             image: user.image,
             memberSince,
+            vipStatus: user.vipStatus,
           }}
           stats={{
             totalReviews,

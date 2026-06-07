@@ -49,12 +49,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        // Buscar role atualizado do banco sempre que gera token
+        // Buscar role e vipStatus atualizados do banco sempre que gera token
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id as string },
-          select: { role: true },
+          select: { role: true, vipStatus: true },
         });
         token.role = dbUser?.role ?? "USER";
+        token.vipStatus = dbUser?.vipStatus ?? "FREE";
       }
       return token;
     },
@@ -62,6 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.vipStatus = (token.vipStatus as string) ?? "FREE";
       }
       return session;
     },

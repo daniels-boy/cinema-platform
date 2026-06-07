@@ -7,6 +7,8 @@ import SpoilerReviewContent from "@/components/reviews/SpoilerReviewContent";
 import LikeReviewButton from "@/components/reviews/LikeReviewButton";
 import ReviewCommentsSection from "@/components/reviews/ReviewCommentsSection";
 import { HOT_TAKES } from "@/types/reviews";
+import UserAvatar from "@/components/ui/UserAvatar";
+import VipBadge from "@/components/ui/VipBadge";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -38,7 +40,7 @@ export default async function ReviewsPage() {
           where: { userId: { in: followingIds } },
           include: {
             user: {
-              select: { id: true, name: true, image: true, email: true },
+              select: { id: true, name: true, image: true, email: true, vipStatus: true },
             },
             likes: {
               select: { userId: true },
@@ -82,7 +84,7 @@ export default async function ReviewsPage() {
       where: excludeIds.length > 0 ? { userId: { notIn: excludeIds } } : undefined,
       include: {
         user: {
-          select: { id: true, name: true, image: true, email: true },
+          select: { id: true, name: true, image: true, email: true, vipStatus: true },
         },
         likes: {
           select: { userId: true },
@@ -297,25 +299,16 @@ export default async function ReviewsPage() {
                           style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}
                           className="review-author-link"
                         >
-                          <div
-                            style={{
-                              position: "relative",
-                              width: 24,
-                              height: 24,
-                              borderRadius: "50%",
-                              overflow: "hidden",
-                              border: "1px solid var(--border)",
-                              background: "var(--surface-2)",
-                              flexShrink: 0,
-                            }}
-                          >
-                            <img
-                              src={rev.user.image || "/placeholder-avatar.jpg"}
-                              alt={authorName}
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          </div>
-                          <span style={{ fontSize: "0.875rem", fontWeight: 700 }}>{authorName}</span>
+                          <UserAvatar
+                            src={rev.user.image}
+                            alt={authorName}
+                            size={24}
+                            vipStatus={rev.user.vipStatus}
+                          />
+                          <span style={{ fontSize: "0.875rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                            {authorName}
+                            <VipBadge status={rev.user.vipStatus} />
+                          </span>
                         </Link>
 
                         {/* Badge de Parça (Seguindo) */}

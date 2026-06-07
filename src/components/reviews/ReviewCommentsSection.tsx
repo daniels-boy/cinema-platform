@@ -5,12 +5,15 @@ import Link from "next/link";
 import { MessageSquare, Trash2, Send, Loader2 } from "lucide-react";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { addReviewComment, deleteReviewComment, getReviewComments } from "@/actions/social";
+import UserAvatar from "../ui/UserAvatar";
+import VipBadge from "../ui/VipBadge";
 
 interface UserItem {
   id: string;
   name: string | null;
   image: string | null;
   email: string;
+  vipStatus?: string;
 }
 
 interface CommentItem {
@@ -209,40 +212,35 @@ export default function ReviewCommentsSection({
                     <Link
                       href={`/profile/${comment.user.id}`}
                       style={{
-                        position: "relative",
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        overflow: "hidden",
-                        border: "1px solid var(--border)",
-                        background: "var(--surface-2)",
                         flexShrink: 0,
                         display: "block",
                       }}
                     >
-                      <img
-                        src={comment.user.image || "/placeholder-avatar.jpg"}
+                      <UserAvatar
+                        src={comment.user.image}
                         alt={displayName}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        onError={(e) => {
-                          e.currentTarget.src = "/placeholder-avatar.jpg";
-                        }}
+                        size={28}
+                        vipStatus={comment.user.vipStatus}
                       />
                     </Link>
 
                     {/* Conteúdo do Comentário */}
                     <div style={{ flexGrow: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
                         <Link
                           href={`/profile/${comment.user.id}`}
                           style={{
                             fontWeight: 700,
                             color: "#fff",
                             textDecoration: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
                           }}
                           className="comment-author-name"
                         >
                           {displayName}
+                          <VipBadge status={comment.user.vipStatus} />
                         </Link>
                         <span style={{ fontSize: "0.6875rem", color: "var(--text-muted)" }}>
                           {new Date(comment.createdAt).toLocaleDateString("pt-BR", {

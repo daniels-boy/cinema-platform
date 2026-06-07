@@ -8,6 +8,8 @@ import { toggleFollowUser } from "@/actions/social";
 import { useAuthModal } from "@/contexts/AuthModalContext";
 import { getTMDBImageUrl } from "@/lib/tmdb";
 import FollowersModal from "./FollowersModal";
+import UserAvatar from "../ui/UserAvatar";
+import VipBadge from "../ui/VipBadge";
 
 interface FeaturedFavoriteItem {
   position: number;
@@ -23,6 +25,7 @@ interface PublicProfileHeaderProps {
     email: string;
     image: string | null;
     memberSince: string;
+    vipStatus?: string;
   };
   stats: {
     totalReviews: number;
@@ -97,32 +100,12 @@ export default function PublicProfileHeader({
         className="profile-header-container"
       >
         {/* Avatar Circular */}
-        <div
-          style={{
-            position: "relative",
-            width: 100,
-            height: 100,
-            borderRadius: "50%",
-            overflow: "hidden",
-            border: "3px solid var(--border)",
-            boxShadow: "0 16px 32px rgba(0,0,0,0.6)",
-            background: "var(--surface)",
-            flexShrink: 0,
-          }}
-        >
-          <img
-            src={user.image || "/placeholder-avatar.jpg"}
-            alt={user.name || "Foto de perfil"}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-            onError={(e) => {
-              e.currentTarget.src = "/placeholder-avatar.jpg";
-            }}
-          />
-        </div>
+        <UserAvatar
+          src={user.image}
+          alt={user.name || "Foto de perfil"}
+          size={100}
+          vipStatus={user.vipStatus}
+        />
 
         {/* Nome, Botão Seguir e Estatísticas */}
         <div style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
@@ -133,10 +116,14 @@ export default function PublicProfileHeader({
                 fontWeight: 800,
                 color: "#fff",
                 lineHeight: 1.2,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
               }}
               className="font-display"
             >
               {user.name || user.email.split("@")[0]}
+              <VipBadge status={user.vipStatus} />
             </h1>
 
             {/* Botão Seguir / Seguindo */}
