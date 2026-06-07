@@ -426,7 +426,7 @@ export default async function ReviewsPage() {
         )}
       </div>
 
-      <style>{`
+      <style precedence="default" href="page-styles-1">{`
         .social-feed-card:hover {
           border-color: var(--border-hover) !important;
           background: var(--surface-2) !important;

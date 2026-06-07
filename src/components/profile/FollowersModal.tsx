@@ -230,7 +230,7 @@ export default function FollowersModal({ userId, type, isOpen, onClose }: Follow
         </div>
       </div>
 
-      <style>{`
+      <style precedence="default" href="followersmodal-styles-1">{`
         @keyframes modalFadeIn {
           from {
             opacity: 0;

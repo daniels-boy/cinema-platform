@@ -980,7 +980,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                       );
                     })
                   )}
-                  <style>{`
+                  <style precedence="default" href="page-styles-1">{`
                     .review-author-link {
                       text-decoration: none;
                       color: #fff !important;
@@ -1139,7 +1139,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
       </div>
 
       {/* ─── CSS EMBEDDED PARA COMPATIBILIDADE RESPONSIVA ───────────────── */}
-      <style>{`
+      <style precedence="default" href="page-styles-2">{`
         @media (max-width: 768px) {
           .movie-grid-wrapper {
             grid-template-columns: 1fr !important;

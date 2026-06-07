@@ -46,7 +46,12 @@ export default function Header() {
     { href: "/recommend", label: "Oráculo" },
     { href: "/reviews", label: "Reviews" },
     { href: "/resenhas", label: "Resenhas" },
+    { href: "/vip", label: "Área VIP" },
   ];
+
+  if (session?.user?.role === "ADMIN") {
+    navLinks.push({ href: "/admin/dashboard", label: "Dashboard" });
+  }
 
   // No home sem scroll: header completamente transparente
   // No home com scroll ou em outra página: fundo escuro com blur
@@ -326,7 +331,7 @@ export default function Header() {
         )}
       </header>
 
-      <style>{`
+      <style precedence="default" href="header-styles-1">{`
         @media (min-width: 640px) {
           .name-label { display: inline !important; }
         }

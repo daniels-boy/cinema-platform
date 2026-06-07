@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/recommend", label: "Oráculo" },
   { href: "/reviews", label: "Reviews" },
   { href: "/resenhas", label: "Resenhas" },
+  { href: "/vip", label: "Área VIP" },
   { href: "/search", label: "Buscar" },
 ];
 
@@ -19,7 +20,7 @@ const accountLinks = [
 export default function Footer() {
   return (
     <>
-      <style>{`
+      <style precedence="default" href="footer-styles-1">{`
         .footer-link {
           color: rgba(255,255,255,0.45);
           font-size: 0.875rem;

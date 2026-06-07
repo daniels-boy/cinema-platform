@@ -393,7 +393,7 @@ export default function ReviewCommentsSection({
         </div>
       )}
 
-      <style>{`
+      <style precedence="default" href="reviewcommentssection-styles-1">{`
         @keyframes slideDown {
           from {
             opacity: 0;

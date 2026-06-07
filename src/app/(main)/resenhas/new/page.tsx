@@ -759,7 +759,7 @@ function NewEssayPageContent() {
         </div>
       </div>
 
-      <style>{`
+      <style precedence="default" href="page-styles-1">{`
         .essay-preview h1 {
           font-size: 1.6rem;
           font-weight: 800;

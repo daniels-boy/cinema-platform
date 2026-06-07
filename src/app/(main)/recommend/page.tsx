@@ -1036,7 +1036,7 @@ export default function RecommendPage() {
       </div>
 
       {/* --- ESTILOS AUXILIARES --- */}
-      <style>{`
+      <style precedence="default" href="page-styles-1">{`
         .quiz-card-btn:hover {
           border-color: var(--accent) !important;
           background: var(--surface-2) !important;

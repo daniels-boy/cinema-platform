@@ -293,7 +293,7 @@ function RegisterForm() {
         </div>
       </div>
 
-      <style>{`
+      <style precedence="default" href="page-styles-1">{`
         @keyframes pageFadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }

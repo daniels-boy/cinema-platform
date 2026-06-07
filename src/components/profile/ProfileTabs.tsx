@@ -405,7 +405,7 @@ export default function ProfileTabs({
       </div>
 
       {/* ─── STYLES EMBEDDED PARA INTERACTION TABS ─────────────────────── */}
-      <style>{`
+      <style precedence="default" href="profiletabs-styles-1">{`
         .empty-tab-state {
           background: var(--surface);
           border: 1px dashed var(--border);

@@ -14,7 +14,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   const newEmail = "admin@gmail.com";
-  const newPassword = "123";
+  const newPassword = "123456";
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   const admin = await prisma.user.findFirst({

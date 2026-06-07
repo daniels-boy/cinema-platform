@@ -361,7 +361,7 @@ export default function EssayReader({ essay, currentUserId, isAdmin = false, bac
         </article>
       </div>
 
-      <style>{`
+      <style precedence="default" href="essayreader-styles-1">{`
         .back-link:hover {
           transform: translateX(-4px);
         }

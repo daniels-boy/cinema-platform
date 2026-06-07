@@ -282,7 +282,7 @@ export default function BadgesPanel({ badgeResults }: BadgesPanelProps) {
         </div>
       )}
 
-      <style>{`
+      <style precedence="default" href="badgespanel-styles-1">{`
         @keyframes badge-unlock-pop {
           0%   { transform: scale(0.8) rotate(-5deg); opacity: 0; }
           60%  { transform: scale(1.1) rotate(3deg);  opacity: 1; }

@@ -43,7 +43,7 @@ export default function BadgeUnlockToast({ badges, onDismiss }: BadgeUnlockToast
 
   return (
     <>
-      <style>{`
+      <style precedence="default" href="badgeunlocktoast-styles-1">{`
         @keyframes badge-slide-in {
           from { transform: translateX(120%) scale(0.9); opacity: 0; }
           to   { transform: translateX(0) scale(1);     opacity: 1; }

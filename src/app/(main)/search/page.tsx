@@ -615,7 +615,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         )}
       </div>
 
-      <style>{`
+      <style precedence="default" href="page-styles-1">{`
         .empty-search-state {
           background: var(--surface);
           border: 1px dashed var(--border);

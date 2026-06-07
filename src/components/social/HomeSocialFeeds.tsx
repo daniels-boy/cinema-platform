@@ -229,7 +229,7 @@ export default function HomeSocialFeeds({
       )}
 
       {/* ─── HOVER AND TRANSITION CSS ──────────────────────────────────── */}
-      <style>{`
+      <style precedence="default" href="homesocialfeeds-styles-1">{`
         .watching-row-scroll::-webkit-scrollbar {
           height: 6px;
         }

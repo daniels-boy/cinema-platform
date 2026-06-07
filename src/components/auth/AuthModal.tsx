@@ -389,7 +389,7 @@ export default function AuthModal() {
       </div>
 
       {/* Estilos para animações de fade e slide */}
-      <style>{`
+      <style precedence="default" href="authmodal-styles-1">{`
         @keyframes authFadeIn {
           from { opacity: 0; }
           to { opacity: 1; }

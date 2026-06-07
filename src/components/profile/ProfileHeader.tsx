@@ -342,7 +342,7 @@ export default function ProfileHeader({
         onClose={() => setIsFollowingModalOpen(false)}
       />
 
-      <style>{`
+      <style precedence="default" href="profileheader-styles-1">{`
         .profile-stat-badge {
           display: flex;
           align-items: center;
