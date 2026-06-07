@@ -160,7 +160,7 @@ export default function VipPage() {
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 40px 0", display: "flex", flexDirection: "column", gap: 16, flexGrow: 1 }}>
                 {plan.benefits.map((benefit, index) => (
                   <li key={index} style={{ display: "flex", gap: 12, alignItems: "flex-start", fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.8)", lineHeight: 1.4 }}>
-                    <div style={{ flexShrink: 0, width: 20, height: 20, borderRadius: "50%", background: plan.premium ? "rgba(223, 172, 64, 0.15)" : plan.popular ? "rgba(232, 180, 75, 0.15)" : "rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyCenter: "center", marginTop: 1 }}>
+                    <div style={{ flexShrink: 0, width: 20, height: 20, borderRadius: "50%", background: plan.premium ? "rgba(223, 172, 64, 0.15)" : plan.popular ? "rgba(232, 180, 75, 0.15)" : "rgba(255, 255, 255, 0.06)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
                       <Check size={12} color={plan.premium ? "#dfac40" : plan.popular ? "var(--accent)" : "rgba(255,255,255,0.4)"} style={{ margin: "auto" }} />
                     </div>
                     <span>{benefit}</span>
